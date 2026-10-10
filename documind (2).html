@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DocuMind AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Design: "redline" identity. Indigo ink + highlighter yellow. Old values are struck through, new values are highlighted.
+   Layout: sticky nav, hero with a redlined document sheet, then a single-page workspace (Upload / Compare / Ask / Insights). */
+:root{
+  --bg:#F6F3FF; --bg2:#ECE8FB; --glow1:rgba(99,102,241,.22); --glow2:rgba(255,214,102,.42); --glow3:rgba(255,150,200,.24); --card:#ffffff; --fg:#14172E; --muted:#585E80; --line:#E2DDF5;
+  --blue:#3A3FD6; --violet:#3A3FD6; --blue-soft:#E8E9FC; --violet-soft:#E8E9FC;
+  --btn-bg:#3A3FD6; --btn-fg:#ffffff;
+  --hl:#FFE066; --on-hl:#14172E;
+  --add-bg:#DCF4E3; --add-fg:#12602E; --del-bg:#FDE4E2; --del-fg:#9B1C1C; --mod-bg:#FFF2C2; --mod-fg:#6F4300; --mod-strong:#FFE066;
+  --hi:#D92D20; --med:#B45F06; --lo:#3A3FD6; --ok:#168A45;
+  --ink:#12152E; --ink-fg:#EEF0FF; --ink-muted:#A9AFD6; --ink-line:#2C3160;
+  --shadow:0 1px 2px rgba(20,23,60,.06),0 14px 34px -14px rgba(20,23,90,.22);
+  --font-display:'Bricolage Grotesque',system-ui,sans-serif; --font-body:'Hanken Grotesk',system-ui,-apple-system,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers---glow1:rgba(99,102,241,.30); --glow2:rgba(255,214,102,.08); --glow3:rgba(190,90,220,.16); color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0A0C26; --bg2:#12153D; --card:#161A3D; --fg:#ECEEFB; --muted:#9FA6CE; --line:#2A3064;
+  --blue:#9296FF; --violet:#9296FF; --blue-soft:#252B6E; --violet-soft:#252B6E; --btn-bg:#8F94FF; --btn-fg:#0C0F22;
+  --add-bg:#12391F; --add-fg:#86efac; --del-bg:#44181b; --del-fg:#fca5a5; --mod-bg:#43330c; --mod-fg:#fcd34d; --mod-strong:#6b5410;
+  --hi:#f87171; --med:#fbbf24; --lo:#9296FF; --ok:#4ade80; --ink:#070918; --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -14px rgba(0,0,0,.6); --glow1:rgba(99,102,241,.30); --glow2:rgba(255,214,102,.08); --glow3:rgba(190,90,220,.16); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A0C26; --bg2:#12153D; --card:#161A3D; --fg:#ECEEFB; --muted:#9FA6CE; --line:#2A3064;
+  --blue:#9296FF; --violet:#9296FF; --blue-soft:#252B6E; --violet-soft:#252B6E; --btn-bg:#8F94FF; --btn-fg:#0C0F22;
+  --add-bg:#12391F; --add-fg:#86efac; --del-bg:#44181b; --del-fg:#fca5a5; --mod-bg:#43330c; --mod-fg:#fcd34d; --mod-strong:#6b5410;
+  --hi:#f87171; --med:#fbbf24; --lo:#9296FF; --ok:#4ade80; --ink:#070918; --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -14px rgba(0,0,0,.6); --glow1:rgba(99,102,241,.30); --glow2:rgba(255,214,102,.08); --glow3:rgba(190,90,220,.16); color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background-color:var(--bg);background-image:radial-gradient(900px 560px at 6% -6%,var(--glow1),transparent 62%),radial-gradient(820px 500px at 98% 2%,var(--glow2),transparent 62%),radial-gradient(1000px 640px at 50% 108%,var(--glow3),transparent 62%);background-attachment:fixed;color:var(--fg);font-family:var(--font-body);font-size:15.5px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3,h4{font-family:var(--font-display);margin:0;line-height:1.15;text-wrap:balance;letter-spacing:-.02em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--blue)}
+::selection{background:var(--hl);color:var(--on-hl)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1160px;margin-inline:auto;padding-inline:20px}
+.mono{font-family:var(--font-mono)}
+.muted{color:var(--muted)}
+svg.ic{width:1.1em;height:1.1em;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:.5rem;justify-content:center;border-radius:10px;padding:.7rem 1.15rem;font-weight:600;border:1px solid var(--line);background:var(--card);transition:background .15s,border-color .15s,box-shadow .15s,filter .15s}
+.btn:hover{border-color:var(--blue);box-shadow:var(--shadow)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none;border-color:var(--line);transform:none}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.1);box-shadow:0 10px 24px -10px var(--btn-bg)}
+.btn.hl{background:var(--hl);color:var(--on-hl);border-color:transparent}
+.btn.hl:hover{filter:brightness(1.05);box-shadow:none}
+.btn.sm{padding:.4rem .75rem;font-size:13.5px;border-radius:8px}
+.btn.ghost{background:transparent}
+.btn.danger:hover{border-color:var(--hi);color:var(--hi)}
+
+/* nav */
+.nav{position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:1rem;height:66px}
+.logo{display:flex;align-items:center;gap:.65rem;font-family:var(--font-display);font-weight:700;font-size:19px;letter-spacing:-.02em;background:none;border:0;padding:0}
+.logo-mark{position:relative;width:34px;height:34px;border-radius:10px;background:var(--btn-bg);display:grid;place-items:center;color:var(--btn-fg)}
+.logo-mark::after{content:"";position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;border-radius:4px;background:var(--hl);border:2px solid var(--bg)}
+.nav-links{display:flex;gap:.25rem;margin-left:auto;align-items:center}
+.nav-links button.lnk{background:none;border:0;padding:.5rem .85rem;border-radius:8px;color:var(--muted);font-weight:500}
+.nav-links button.lnk:hover{color:var(--fg);background:var(--bg2)}
+.nav-links .btn{margin-left:8px}
+.menu-btn{display:none;margin-left:auto}
+@media(max-width:760px){
+  .menu-btn{display:inline-flex}
+  .nav-links{display:none;position:absolute;left:0;right:0;top:66px;background:var(--bg);border-bottom:1px solid var(--line);flex-direction:column;align-items:stretch;padding:12px 20px;margin:0}
+  .nav-links .btn{margin:6px 0 0}
+  .nav-links.open{display:flex}
+}
+.tabs{border-bottom:1px solid var(--line);background:var(--card)}
+.tabs .wrap{display:flex;gap:.5rem;overflow-x:auto;align-items:center}
+.tab{display:flex;align-items:center;gap:.5rem;padding:.95rem .85rem;border:0;border-bottom:2px solid transparent;background:none;font-weight:600;color:var(--muted);white-space:nowrap;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--fg)}
+.tab.on{color:var(--fg);border-bottom-color:var(--blue)}
+.tab.on svg{color:var(--blue)}
+.pill{display:inline-flex;align-items:center;gap:.35rem;font-size:12.5px;font-weight:600;padding:.15rem .65rem;border-radius:999px;background:var(--blue-soft);color:var(--blue);white-space:nowrap}
+.pill.demo{background:var(--hl);color:var(--on-hl)}
+.pill.hi{background:var(--del-bg);color:var(--del-fg)}.pill.med{background:var(--mod-bg);color:var(--mod-fg)}.pill.lo{background:var(--blue-soft);color:var(--blue)}
+.pill.add{background:var(--add-bg);color:var(--add-fg)}.pill.rem{background:var(--del-bg);color:var(--del-fg)}.pill.vio{background:var(--violet-soft);color:var(--violet)}
+.pill.ok{background:var(--add-bg);color:var(--add-fg)}
+
+/* hero */
+.hero{position:relative;padding-block:84px 96px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--fg) 16%,transparent) 1px,transparent 1.3px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse 75% 70% at 55% 45%,#000 25%,transparent 78%);mask-image:radial-gradient(ellipse 75% 70% at 55% 45%,#000 25%,transparent 78%);pointer-events:none}
+.hero-grid{position:relative}
+.hero-grid{display:grid;grid-template-columns:1.02fr 1fr;gap:64px;align-items:center}
+@media(max-width:940px){.hero-grid{grid-template-columns:1fr;gap:48px}.hero{padding-block:48px 64px}}
+.hero h1{font-size:clamp(2.5rem,5.6vw,4.2rem);font-weight:700;letter-spacing:-.035em;line-height:1.04;max-width:13ch}
+.hero .sub{font-size:1.15rem;color:var(--muted);max-width:50ch;margin-top:22px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.fine{margin-top:18px;font-size:13.5px;color:var(--muted)}
+.sheet-wrap{position:relative;min-width:0;padding-right:14px}
+.sheet-wrap::before{content:"";position:absolute;inset:16px 0 -16px 28px;border:1px solid var(--line);border-radius:18px;background:var(--bg2);transform:rotate(2deg)}
+.sheet{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:24px 26px;display:grid;gap:16px;min-width:0}
+.sheet-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.sheet-top b{font-family:var(--font-display);font-size:1.05rem}
+.rl{display:grid;gap:4px;padding-bottom:16px;border-bottom:1px dashed var(--line)}
+.rl-t{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.rl-v{font-family:var(--font-display);font-size:clamp(1.6rem,3.2vw,2.2rem);font-weight:700;letter-spacing:-.03em;display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;font-variant-numeric:tabular-nums;line-height:1.3}
+.rl-old{color:var(--del-fg);background:linear-gradient(currentColor,currentColor) no-repeat 0 56%/100% 3px}
+.rl-new{color:var(--on-hl);background:linear-gradient(var(--hl),var(--hl)) no-repeat 0 100%/100% 90%;padding:0 .22em;border-radius:3px}
+.rl-d{font-size:13.5px;color:var(--muted)}
+.play .rl-old{animation:strike .55s ease-out both;animation-delay:calc(.6s + var(--i)*.5s)}
+.play .rl-new{animation:hlt .55s ease-out both;animation-delay:calc(.95s + var(--i)*.5s)}
+@keyframes strike{from{background-size:0% 3px}}
+@keyframes hlt{from{background-size:0% 90%;color:var(--fg)}}
+
+/* marketing sections */
+section.block{padding-block:92px}
+section.alt{background:color-mix(in srgb,var(--bg2) 60%,transparent)}
+section.dark{background:var(--ink);color:var(--ink-fg)}
+.sec-h{max-width:720px;margin-bottom:44px}
+.sec-h h2{font-size:clamp(1.8rem,3.4vw,2.7rem);letter-spacing:-.03em}
+.sec-h p{color:var(--muted);margin-top:12px;font-size:1.05rem}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0}
+.card h3{font-size:1.1rem;margin-bottom:6px}
+.card p{color:var(--muted);font-size:14.5px}
+.fi{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-size:21px}
+.feats{display:grid;grid-template-columns:1fr 1fr;gap:0 64px}
+.feat{display:grid;grid-template-columns:auto 1fr;gap:18px;padding-block:28px;border-top:1px solid var(--line)}
+.feat h3{font-size:1.2rem;margin-bottom:6px}
+.feat p{color:var(--muted)}
+@media(max-width:820px){.feats{grid-template-columns:1fr}}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:36px}
+.how-i{border-top:3px solid var(--fg);padding-top:20px}
+.how-i .n{font-family:var(--font-display);font-weight:700;font-size:3.2rem;line-height:1;letter-spacing:-.05em;color:var(--blue);margin-bottom:14px}
+.how-i h3{font-size:1.25rem;margin-bottom:6px}
+.how-i p{color:var(--muted)}
+@media(max-width:820px){.how{grid-template-columns:1fr;gap:28px}}
+.dark .sec-h p{color:var(--ink-muted)}
+.uses{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--ink-line);border-radius:18px;overflow:hidden}
+.use{padding:28px 26px;border-right:1px solid var(--ink-line)}
+.use:last-child{border-right:0}
+.use .fi{background:transparent;border:1px solid var(--ink-line);color:var(--hl)}
+.use h3{font-size:1.15rem;margin:18px 0 8px}
+.use p{color:var(--ink-muted);font-size:14.5px}
+@media(max-width:940px){.uses{grid-template-columns:1fr 1fr}.use{border-bottom:1px solid var(--ink-line)}.use:nth-child(2n){border-right:0}.use:nth-last-child(-n+2){border-bottom:0}}
+@media(max-width:560px){.uses{grid-template-columns:1fr}.use{border-right:0}.use:nth-last-child(2){border-bottom:1px solid var(--ink-line)}}
+.dark .btn:not(.hl){background:transparent;color:var(--ink-fg);border-color:var(--ink-line)}
+.dark .btn:not(.hl):hover{border-color:var(--hl);box-shadow:none}
+footer{border-top:1px solid var(--line);background:var(--bg2);padding-block:44px}
+.foot{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:32px}
+@media(max-width:760px){.foot{grid-template-columns:1fr}}
+footer h4{font-size:15px;color:var(--fg);margin-bottom:10px}
+footer p,footer li{font-size:14px}
+footer ul{list-style:none;padding:0;margin:0;display:grid;gap:3px;color:var(--muted)}
+
+/* app */
+.app{padding-block:40px 84px}
+.app h1{font-size:clamp(1.8rem,3.2vw,2.4rem);letter-spacing:-.03em}
+.app h2{letter-spacing:-.02em}
+.app .lead{color:var(--muted);margin-top:8px;max-width:70ch}
+.drop{margin-top:26px;border:1.5px dashed color-mix(in srgb,var(--blue) 45%,var(--line));border-radius:18px;padding:48px 20px;text-align:center;background:var(--card);transition:border-color .2s,background .2s;cursor:pointer}
+.drop:hover,.drop.over{border-style:solid;border-color:var(--blue);background:var(--blue-soft)}
+.drop .big{width:60px;height:60px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-size:26px}
+.drop:hover .big,.drop.over .big{background:var(--btn-bg);color:var(--btn-fg)}
+.file-row{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+@media(max-width:600px){.file-row{grid-template-columns:auto 1fr auto}.file-row .st{grid-column:2/4;order:5}}
+.file-row .nm{font-weight:600;overflow-wrap:anywhere}
+.ftype{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-family:var(--font-mono);font-size:11px;font-weight:500;background:var(--blue-soft);color:var(--blue)}
+.err{border:1px solid var(--del-fg);background:var(--del-bg);color:var(--del-fg);padding:10px 14px;border-radius:10px;display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.note{border-left:3px solid var(--blue);background:var(--card);padding:12px 16px;border-radius:0 10px 10px 0;font-size:14px;color:var(--muted);display:flex;gap:10px;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.note svg{color:var(--blue);margin-top:3px}
+.spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:56px 20px;border:1.5px dashed var(--line);border-radius:18px;background:var(--card)}
+.empty h3{margin-bottom:8px;font-size:1.25rem}
+
+/* compare */
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-block:24px}
+@media(max-width:800px){.tiles{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--card);padding:16px 18px}
+.tile .v{font-family:var(--font-display);font-size:2rem;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .l{font-size:13px;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;margin-bottom:20px}
+.fgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.fgroup>span{font-size:13px;font-weight:600;color:var(--muted);margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:.28rem .8rem;font-size:13.5px;font-weight:500;transition:background .15s,border-color .15s,color .15s}
+.chip:hover{border-color:var(--blue)}
+.chip.on{background:var(--btn-bg);border-color:var(--btn-bg);color:var(--btn-fg)}
+select{font:inherit;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:.45rem .65rem;max-width:100%}
+.panes{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:800px){.panes{grid-template-columns:1fr}}
+.pane{border:1px solid var(--line);border-radius:18px;background:var(--card);overflow:hidden;min-width:0;box-shadow:var(--shadow)}
+.pane-h{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg2);display:flex;gap:10px;align-items:center;font-weight:600;font-size:14px;min-width:0}
+.pane-h span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pane-b{max-height:400px;overflow:auto;padding:14px 14px;display:grid;gap:3px;font-size:14.5px;line-height:1.65}
+.sec-l{font-size:13px;font-weight:700;color:var(--muted);margin-top:12px;padding-inline:11px;font-family:var(--font-display)}
+.seg{padding:4px 8px;border-radius:6px;border-left:3px solid transparent;display:flex;gap:8px;align-items:baseline;transition:box-shadow .3s}
+.seg .pg{flex:none;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);width:24px}
+.seg .tx{min-width:0;overflow-wrap:anywhere}
+.seg.mod{background:var(--mod-bg);color:var(--mod-fg);cursor:pointer;border-left-color:var(--med)}
+.seg.del{background:var(--del-bg);color:var(--del-fg);cursor:pointer;border-left-color:var(--hi)}
+.seg.add{background:var(--add-bg);color:var(--add-fg);cursor:pointer;border-left-color:var(--ok)}
+.seg.faded{opacity:.45}
+.seg.flash,.chg.flash{box-shadow:0 0 0 3px var(--blue)}
+mark{background:var(--mod-strong);color:inherit;border-radius:3px;padding:0 3px;font-weight:700}
+mark.q{background:var(--mod-bg);color:var(--mod-fg)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:12px 0 26px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid var(--line)}
+.topic{margin-top:30px}
+.topic h3{font-size:1.15rem;display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.chg{border:1px solid var(--line);border-left-width:4px;border-radius:12px;background:var(--card);padding:16px 18px;margin-bottom:12px;transition:box-shadow .3s;min-width:0}
+.chg.hi{border-left-color:var(--hi)}.chg.med{border-left-color:var(--med)}.chg.lo{border-left-color:var(--lo)}
+.chg-h{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.chg-h b{font-family:var(--font-display);font-size:16px;letter-spacing:-.01em;overflow-wrap:anywhere}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.delta{margin-top:6px;font-size:14.5px;font-weight:600}
+.ev{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:700px){.ev{grid-template-columns:1fr}}
+.quote{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px;background:var(--bg2);min-width:0;overflow-wrap:anywhere}
+.quote .q-h{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.quote.none{font-style:italic;color:var(--muted)}
+.bars{display:grid;gap:10px}
+.bar-r{display:grid;grid-template-columns:110px 1fr 28px;gap:12px;align-items:center;font-size:14px}
+.bar-t{height:10px;border-radius:6px;background:var(--bg2);overflow:hidden}
+.bar-f{height:100%;border-radius:6px}
+.mlist{display:grid;gap:8px}
+.mi{border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:14.5px;background:var(--card)}
+
+/* chat */
+.chat{display:grid;grid-template-columns:1fr;gap:16px}
+.msgs{display:grid;gap:16px;padding:6px 0}
+.bubble{max-width:100%;border-radius:16px;padding:13px 18px;min-width:0}
+.u{justify-self:end;background:var(--btn-bg);color:var(--btn-fg);max-width:min(560px,90%);border-bottom-right-radius:5px}
+.ai{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);border-bottom-left-radius:5px}
+.ai ul{margin:.4rem 0;padding-left:1.2rem}
+.ai li{margin-block:3px}
+.insuff{border-color:var(--med);background:var(--mod-bg);color:var(--mod-fg)}
+.evs{display:grid;gap:8px;margin-top:14px}
+.ev-l{font-size:13px;font-weight:700;color:var(--muted);font-family:var(--font-display)}
+.evc{border:1px solid var(--line);border-radius:10px;background:var(--bg2);padding:12px 14px;font-size:14px;color:var(--fg)}
+.evc .q-h{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.evc .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.compose{display:flex;gap:10px;position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);background:var(--card);padding:10px;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.compose textarea{flex:1;min-width:0;resize:none;font:inherit;color:var(--fg);background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:.65rem .85rem;height:46px}
+.compose textarea:focus{outline:2px solid var(--blue);outline-offset:0;border-color:transparent}
+.sugg{display:flex;gap:8px;flex-wrap:wrap}
+.modal-bg{position:fixed;inset:0;background:rgba(8,10,32,.6);z-index:60;display:grid;place-items:center;padding:16px}
+.modal{background:var(--card);border-radius:18px;border:1px solid var(--line);max-width:760px;width:100%;max-height:86vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.modal-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.modal-b{overflow:auto;padding:16px 20px;display:grid;gap:6px;font-size:14.5px}
+.modal-b .seg.hl{background:var(--mod-strong);color:var(--on-hl);box-shadow:0 0 0 2px var(--blue)}
+.toast-w{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);z-index:80;display:grid;gap:8px;width:min(92vw,420px)}
+.toast{background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:10px;font-size:14px;box-shadow:var(--shadow);display:flex;gap:8px;align-items:center}
+.toast.bad{background:var(--hi);color:#fff}
+.hist{display:grid;gap:8px}
+.hist-r{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:11px 14px;background:var(--card)}
+pre.rep{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-family:var(--font-mono);font-size:12.5px;white-space:pre-wrap;max-height:340px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* v2: floating badges, trust strip, proof demo, closing panel */
+.float{position:absolute;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);z-index:2}
+.float svg{color:var(--ok)}
+.float.f1{left:26px;top:-22px}
+.float.f2{right:0;bottom:-26px}
+.float.f2 svg{color:var(--blue)}
+@media(max-width:940px){.float.f1{left:14px}}
+.strip{border-block:1px solid var(--line);background:color-mix(in srgb,var(--card) 62%,transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.strip .wrap{display:flex;justify-content:space-between;gap:14px 36px;flex-wrap:wrap;padding-block:20px}
+.strip span{display:flex;gap:10px;align-items:center;font-weight:600;font-size:14.5px}
+.strip svg{color:var(--blue);font-size:1.25em}
+.proof{display:grid;grid-template-columns:1fr 1.1fr;gap:64px;align-items:center}
+@media(max-width:900px){.proof{grid-template-columns:1fr;gap:36px}}
+.proof h2{font-size:clamp(1.8rem,3.4vw,2.7rem);letter-spacing:-.03em;max-width:16ch}
+.proof .lede{color:var(--muted);font-size:1.05rem;margin-top:14px;max-width:46ch}
+.ticks{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:12px}
+.ticks li{display:flex;gap:12px;align-items:flex-start;font-weight:500}
+.ticks svg{flex:none;margin-top:3px;width:22px;height:22px;padding:4px;border-radius:50%;background:var(--hl);color:var(--on-hl);stroke-width:3}
+.mock{display:grid;gap:14px;background:color-mix(in srgb,var(--card) 70%,transparent);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);min-width:0}
+.final{background:var(--btn-bg);color:var(--btn-fg);border-radius:28px;padding:64px 40px;text-align:center;position:relative;overflow:hidden}
+.final::before,.final::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.final::before{width:360px;height:360px;right:-90px;top:-150px;background:var(--hl);opacity:.22}
+.final::after{width:280px;height:280px;left:-80px;bottom:-140px;background:#fff;opacity:.1}
+.final h2{font-size:clamp(1.9rem,4vw,3rem);letter-spacing:-.035em;max-width:18ch;margin-inline:auto;position:relative}
+.final p{margin:14px auto 0;max-width:46ch;opacity:.88;font-size:1.05rem;position:relative}
+.final .cta{justify-content:center;position:relative}
+.final .btn:not(.hl){background:transparent;color:inherit;border-color:color-mix(in srgb,currentColor 45%,transparent)}
+.final .btn:not(.hl):hover{border-color:currentColor;box-shadow:none}
+@media(max-width:600px){.final{padding:44px 22px;border-radius:22px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast-w" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ============================ helpers ============================ */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const IC={
+ logo:'<path d="M4 4h10l6 6v10a0 0 0 0 1 0 0H4z"/><path d="M14 4v6h6"/><path d="M8 14h8M8 18h5"/>',
+ upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+ file:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+ spark:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 1.8L21.5 19.5 19.7 20.2 19 22l-.7-1.8-1.8-.7 1.8-.7z"/>',
+ shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+ layers:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+ check:'<path d="m5 12 5 5 9-10"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',
+ alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.5v.01"/>',
+ dl:'<path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+ refresh:'<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>',
+ trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ send:'<path d="M3 11 21 3l-8 18-2-8z"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ scale:'<path d="M12 4v16M6 20h12M5 7h14"/><path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/>',
+ book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>',
+ gavel:'<path d="m14 5 5 5M10 9l5 5M3 21l7-7M12 3l-4 4 8 8 4-4z"/>',
+ build:'<path d="M4 20V8l8-4 8 4v12M9 20v-6h6v6"/>',
+ chart:'<path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-8"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>',
+ eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ quote:'<path d="M7 7h4v5a4 4 0 0 1-4 4M15 7h4v5a4 4 0 0 1-4 4"/>',
+ info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+};
+const ic=(n)=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||''}</svg>`;
+const fmtSize=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
+const LET='ABCDEFGH';
+
+/* ============================ DEMO DATA (fictional) ============================ */
+const DEMO_DOCS=[
+ {name:'Attendance-Policy-v1 (sample).txt',type:'TXT',size:1180,pages:[
+  {page:1,text:`SAMPLE INSTITUTE OF TECHNOLOGY (FICTIONAL)
+STUDENT ATTENDANCE AND ASSIGNMENT POLICY, VERSION 1
+1. Attendance
+Minimum attendance requirement is 75% of scheduled classes in every subject.
+Attendance is recorded by the course instructor at the start of each class.
+Students with a valid medical certificate may apply for condonation of absence.
+2. Assignments
+Assignments are due in 7 days from the date they are issued.
+Students may submit assignments through the college portal or in person.`},
+  {page:2,text:`3. Late Submissions
+Late submissions receive a 5% penalty on the marks awarded.
+Students may request a one-time extension of up to 2 days with the instructor's written approval.
+4. Grievances
+Students may raise concerns about marks with the course instructor within 10 days of results.`}]},
+ {name:'Attendance-Policy-v2 (sample).txt',type:'TXT',size:1240,pages:[
+  {page:1,text:`SAMPLE INSTITUTE OF TECHNOLOGY (FICTIONAL)
+STUDENT ATTENDANCE AND ASSIGNMENT POLICY, VERSION 2
+1. Attendance
+Minimum attendance requirement is 85% of scheduled classes in every subject.
+Attendance is recorded by the course instructor at the start of each class.
+Students with a valid medical certificate may apply for condonation of absence.
+2. Assignments
+Assignments are due in 5 days from the date they are issued.
+Students must submit assignments through the college portal only.`},
+  {page:2,text:`3. Late Submissions
+Late submissions receive a 10% penalty on the marks awarded.
+Students below the minimum attendance requirement must not be permitted to appear in end-semester examinations.
+4. Grievances
+Students may raise concerns about marks with the course instructor within 10 days of results.`}]}
+];
+
+/* ============================ ENGINE ============================ */
+const STOP=new Set('a an the of to in on for and or is are was be been by with as at from that this it its their they which who will shall may must should any all each than then there these those such under over into per what how do does did have has had can could would if when where whom whose about between your you i we our us me my'.split(' '));
+const stem=w=>(w.length>4&&w.endsWith('s')&&!w.endsWith('ss'))?w.slice(0,-1):w;
+const toks=t=>t.toLowerCase().replace(/[^a-z0-9%₹$.\-\s]/g,' ').split(/\s+/).map(w=>w.replace(/^[.\-]+|[.\-]+$/g,'')).filter(w=>w&&!STOP.has(w)).map(stem);
+const dice=(a,b)=>{const A=new Set(a),B=new Set(b);if(!A.size||!B.size)return 0;let i=0;A.forEach(x=>B.has(x)&&i++);return 2*i/(A.size+B.size)};
+const norm=s=>s.toLowerCase().replace(/\s+/g,' ').trim();
+
+function isHeading(l){
+  const w=l.split(/\s+/).length;
+  if(l.length>80||/[.;,]$/.test(l))return false;
+  if(/:$/.test(l)&&w<=8)return true;
+  if(/[A-Z]/.test(l)&&l===l.toUpperCase())return true;
+  if(/^(\d+(\.\d+)*[.)]?\s+)\S/.test(l)&&w<=8)return true;
+  if(/^(section|article|clause|schedule|annex)\b/i.test(l)&&w<=8)return true;
+  return false;
+}
+function segmentDoc(doc){
+  const segs=[];let section='';
+  doc.pages.forEach(p=>{
+    p.text.split(/\r?\n/).forEach(raw=>{
+      const line=raw.trim();if(!line)return;
+      if(isHeading(line)){section=line.replace(/^\d+(\.\d+)*[.)]?\s+/,'').replace(/[:\s]+$/,'');return}
+      line.split(/(?<=[.;!?])\s+(?=[A-Z(])/).forEach(s=>{
+        s=s.trim();if(s.split(/\s+/).length>=3)segs.push({text:s,page:p.page,section,doc:doc.id});
+      });
+    });
+  });
+  segs.forEach((s,i)=>{s.id=doc.id+'-'+i;s.t=toks(s.text)});
+  return segs;
+}
+
+const MONTHS='jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?';
+const RE={
+ date:new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:${MONTHS})\\.?,?\\s+\\d{4}\\b|\\b(?:${MONTHS})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}\\b|\\b\\d{4}-\\d{2}-\\d{2}\\b|\\b\\d{1,2}[/.]\\d{1,2}[/.]\\d{4}\\b`,'gi'),
+ money:/(?:₹|\$|€|£|\brs\.?|\binr|\busd)\s?\d[\d,]*(?:\.\d+)?(?:\s?(?:lakh|crore|k|million)\b)?/gi,
+ percent:/\b\d+(?:\.\d+)?\s?(?:%|percent\b|per cent\b)/gi,
+ duration:/(?<![\w.])\(?\d+\)?\s?(?:business |working |calendar )?(?:days?|weeks?|months?|hours?|years?)\b/gi
+};
+const KINDS=['date','money','percent','duration'];
+function extractFacts(text){
+  const out={};let rest=text;
+  KINDS.forEach(k=>{
+    const m=[...rest.matchAll(RE[k])].map(x=>x[0].trim());
+    out[k]=m.map(raw=>{
+      const num=parseFloat(raw.replace(/[^\d.]/g,'').replace(/^\./,''))||0;
+      let val=num,unit='';
+      if(k==='duration'){const u=raw.toLowerCase().match(/(hour|day|week|month|year)/)[1];unit=u;}
+      if(k==='date'){const d=Date.parse(raw.replace(/(\d)(st|nd|rd|th)/,'$1'));val=isNaN(d)?null:d}
+      return{raw:raw.replace(/\s+/g,' '),val,unit};
+    });
+    m.forEach(r=>{rest=rest.replace(r,' ')});
+  });
+  return out;
+}
+const DAYS={hour:1/24,day:1,week:7,month:30,year:365};
+function deltaText(k,f,t){
+  if(!f||!t)return f?'Value removed':'New value introduced';
+  if(k==='percent'){const d=+(t.val-f.val).toFixed(2);return`${d>0?'+':'−'}${Math.abs(d)} percentage points`}
+  if(k==='duration'){
+    let d,u=f.unit;
+    if(f.unit===t.unit)d=t.val-f.val;else{d=t.val*DAYS[t.unit]-f.val*DAYS[f.unit];u='day'}
+    d=+d.toFixed(2);if(!d)return'No change in length';
+    return`${d>0?'+':'−'}${Math.abs(d)} ${u}${Math.abs(d)===1?'':'s'} (${d>0?'longer':'shorter'})`}
+  if(k==='money'){const d=+(t.val-f.val).toFixed(2);const p=f.val?Math.round(d/f.val*100):null;return`${d>0?'+':'−'}${Math.abs(d)}${p!==null?` (${p>0?'+':''}${p}%)`:''}`}
+  if(k==='date'){if(f.val==null||t.val==null)return'Date changed';const d=Math.round((t.val-f.val)/864e5);return d?`${Math.abs(d)} day${Math.abs(d)===1?'':'s'} ${d>0?'later':'earlier'}`:'Same date'}
+  return'';
+}
+const TOPICS=[
+ ['Penalties & Fees',/penalt|\bfines?\b|\bfees?\b|deduct|surcharge|\blate\b/i],
+ ['Attendance',/attendance|absen|present\b/i],
+ ['Deadlines & Submissions',/deadline|\bdue\b|submi|assignment|extension|within \d/i],
+ ['Grading & Exams',/\bgrade|\bmarks\b|exam|assessment|\bpass\b|cgpa/i],
+ ['Payment & Amounts',/payment|invoice|amount|price|\bcost|salary|compensation|₹|\$/i],
+ ['Termination & Notice',/terminat|\bnotice\b|cancel|resign/i],
+ ['Confidentiality & Data',/confiden|privacy|\bdata\b|disclos/i],
+ ['Liability & Compliance',/liabil|indemn|complian|audit|regulat|governing/i],
+ ['Leave & Conduct',/\bleave\b|medical|conduct|disciplin|misconduct/i]];
+const topicOf=(text,section)=>{for(const[n,r]of TOPICS)if(r.test(text))return n;return section||'General'};
+const MOD={o:/\b(must|shall|required|mandatory|compulsory)\b/i,p:/\b(may|can|optional|permitted|allowed|eligible)\b/i,n:/\b(not|never|prohibited|forbidden|cannot)\b/i};
+const modal=t=>({o:MOD.o.test(t),p:MOD.p.test(t),n:MOD.n.test(t),score:MOD.o.test(t)?2:MOD.p.test(t)?1:0});
+function strictSign(text,kind){
+  const t=text.toLowerCase();
+  if(kind==='duration'&&/\b(due|deadline|within|submit|notice|respond|report|valid)\b/.test(t))return -1;
+  if(/\b(minimum|at least|no less|attendance|penalt|fine|deduct|late)\b/.test(t))return 1;
+  if(/\b(maximum|at most|no more|up to|limit|cap)\b/.test(t))return -1;
+  return 0;
+}
+function wdiff(a,b){
+  const x=a.split(/\s+/),y=b.split(/\s+/),n=x.length,m=y.length;
+  const k=w=>w.toLowerCase().replace(/[.,;:!?]+$/,'');
+  const dp=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)dp[i][j]=k(x[i])===k(y[j])?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+  const ha=[],hb=[];let i=0,j=0;
+  while(i<n&&j<m){
+    if(k(x[i])===k(y[j])){ha.push(esc(x[i]));hb.push(esc(y[j]));i++;j++}
+    else if(dp[i+1][j]>=dp[i][j+1]){ha.push(`<mark>${esc(x[i])}</mark>`);i++}
+    else{hb.push(`<mark>${esc(y[j])}</mark>`);j++}
+  }
+  while(i<n)ha.push(`<mark>${esc(x[i++])}</mark>`);
+  while(j<m)hb.push(`<mark>${esc(y[j++])}</mark>`);
+  return[ha.join(' '),hb.join(' ')];
+}
+
+function compareDocs(A,B){
+  const sa=A.segs,sb=B.segs,mA=new Map(),mB=new Map();
+  const byText=new Map();
+  sb.forEach((s,j)=>{const k=norm(s.text);(byText.get(k)||byText.set(k,[]).get(k)).push(j)});
+  sa.forEach((s,i)=>{const arr=byText.get(norm(s.text));if(arr&&arr.length){const j=arr.shift();mA.set(i,{j,same:true});mB.set(j,{i,same:true})}});
+  const cand=[];
+  sa.forEach((s,i)=>{if(mA.has(i))return;sb.forEach((u,j)=>{if(mB.has(j))return;
+    let d=dice(s.t,u.t);if(d<.45)return;if(topicOf(s.text,s.section)===topicOf(u.text,u.section))d+=.05;cand.push([d,i,j])})});
+  cand.sort((p,q)=>q[0]-p[0]);
+  cand.forEach(([d,i,j])=>{if(mA.has(i)||mB.has(j))return;mA.set(i,{j,same:false,d});mB.set(j,{i,same:false,d})});
+  const changes=[];
+  sa.forEach((s,i)=>{const m=mA.get(i);
+    if(!m)changes.push(mkChange('removed',s,null,i));
+    else if(!m.same)changes.push(mkChange('modified',s,sb[m.j],i,m.d))});
+  sb.forEach((s,j)=>{if(!mB.has(j))changes.push(mkChange('added',null,s,sa.length+j))});
+  changes.sort((p,q)=>p.order-q.order);
+  changes.forEach((c,n)=>{c.id='c'+(n+1);c.n=n+1});
+  const segInfo={};
+  changes.forEach(c=>{if(c.a)segInfo[c.a.id]={kind:c.kind==='modified'?'mod':'del',cid:c.id,html:c.htmlA};if(c.b)segInfo[c.b.id]={kind:c.kind==='modified'?'mod':'add',cid:c.id,html:c.htmlB}});
+  const tA=new Set(sa.map(s=>topicOf(s.text,s.section))),tB=new Set(sb.map(s=>topicOf(s.text,s.section)));
+  const counts={total:changes.length,high:0,medium:0,low:0,added:0,removed:0,modified:0};
+  changes.forEach(c=>{counts[c.sev==='hi'?'high':c.sev==='med'?'medium':'low']++;counts[c.kind]++});
+  const tally={A:0,B:0};changes.forEach(c=>{if(c.stricter)tally[c.stricter]++});
+  return{A,B,changes,segInfo,counts,tally,onlyTopicsA:[...tA].filter(t=>!tB.has(t)),onlyTopicsB:[...tB].filter(t=>!tA.has(t))};
+}
+function mkChange(kind,a,b,order,sim){
+  const text=(a?.text||'')+' '+(b?.text||'');
+  const topic=topicOf(text,(a||b).section);
+  const c={kind,a,b,order,topic,facts:[],types:[kind],stricter:null,sim};
+  if(kind==='modified'){
+    const fa=extractFacts(a.text),fb=extractFacts(b.text);
+    KINDS.forEach(k=>{
+      const x=fa[k],y=fb[k];
+      if(x.map(f=>norm(f.raw)).join('|')!==y.map(f=>norm(f.raw)).join('|')){
+        const len=Math.max(x.length,y.length);
+        for(let i=0;i<len;i++){const f=x[i],t=y[i];if(f&&t&&norm(f.raw)===norm(t.raw))continue;
+          c.facts.push({kind:k,from:f?.raw,to:t?.raw,delta:deltaText(k,f,t),sign:(f&&t&&f.val!=null&&t.val!=null)?Math.sign(t.val*(DAYS[t.unit]||1)-f.val*(DAYS[f.unit]||1))*strictSign(text,k):0})}
+      }
+    });
+    c.facts.forEach(f=>c.types.push(f.kind==='duration'?'deadline':f.kind==='percent'?'percentage':f.kind==='money'?'amount':'date'));
+    const ma=modal(a.text),mb=modal(b.text);
+    const modalChanged=ma.score!==mb.score||ma.n!==mb.n;
+    if(modalChanged){c.types.push('rule');c.modal=[ma,mb]}
+    const [ha,hb]=wdiff(a.text,b.text);c.htmlA=ha;c.htmlB=hb;
+    const f0=c.facts[0];
+    if(f0){c.title=`${topic}: ${c.facts.slice(0,2).map(f=>`${f.from||'—'} → ${f.to||'—'}`).join(', ')}`;c.delta=c.facts.map(f=>f.delta).join(' · ');
+      const s=c.facts.find(f=>f.sign);if(s)c.stricter=s.sign>0?'B':'A'}
+    if(!c.stricter&&modalChanged){c.stricter=(mb.score>ma.score||(mb.n&&!ma.n))?'B':'A'}
+    if(!f0){c.title=modalChanged?`${topic}: obligation wording changed`:`${topic}: wording changed`;c.delta=modalChanged?'Strength of the rule changed (for example may ↔ must)':'Wording changed without a change in numbers or dates'}
+    c.sev=(c.facts.length||modalChanged)?'hi':(sim<.7?'med':'lo');
+    if(!c.facts.length&&!modalChanged)c.types.push('wording');
+  }else{
+    const s=a||b,m=modal(s.text),f=extractFacts(s.text);
+    const hasFact=KINDS.some(k=>f[k].length);
+    c.htmlA=a?esc(a.text):'';c.htmlB=b?esc(b.text):'';
+    c.title=`${topic}: clause ${kind==='added'?'added in':'removed from'} Document ${kind==='added'?'B':'A'}`;
+    c.delta=kind==='added'?'Appears only in Document B':'Appears only in Document A';
+    c.sev=(m.o||m.n||hasFact)?'hi':(s.text.split(/\s+/).length>=8?'med':'lo');
+    if(kind==='added')c.stricter=(m.o||m.n)?'B':(m.p?'A':null);else c.stricter=(m.o||m.n)?'A':(m.p?'B':null);
+    if(m.o||m.n)c.types.push('rule');
+    if(hasFact){if(f.date.length)c.types.push('date');if(f.money.length)c.types.push('amount');if(f.percent.length)c.types.push('percentage');if(f.duration.length)c.types.push('deadline')}
+  }
+  c.types=[...new Set(c.types)];
+  return c;
+}
+function buildAnalysis(rawDocs,demo){
+  const docs=rawDocs.map((d,i)=>{const o={id:'d'+i,letter:LET[i],name:d.name,type:d.type,size:d.size,pages:d.pages};o.segs=segmentDoc(o);return o});
+  const pairs=[];
+  for(let i=0;i<docs.length;i++)for(let j=i+1;j<docs.length;j++)pairs.push({i,j,...compareDocs(docs[i],docs[j])});
+  return{docs,pairs,demo,sel:0,ts:Date.now()};
+}
+function summarize(p){
+  const c=p.counts,a=p.A.name,b=p.B.name;
+  if(!c.total)return`No differences were found between “${a}” and “${b}”. Every sentence in one document has a matching sentence in the other.`;
+  const parts=[`Compared “${a}” (A) with “${b}” (B) and found ${c.total} difference${c.total===1?'':'s'}: ${c.modified} modified, ${c.added} added in B and ${c.removed} removed from A.`];
+  if(c.high)parts.push(`${c.high} ${c.high===1?'is':'are'} high priority because they change numbers, dates, deadlines or the strength of a rule.`);
+  if(p.tally.A||p.tally.B)parts.push(`Applying simple keyword rules, B looks stricter in ${p.tally.B} change${p.tally.B===1?'':'s'} and A in ${p.tally.A}.`);
+  return parts.join(' ');
+}
+
+/* -------- question answering: diff-aware rules + keyword retrieval (no LLM) -------- */
+const curPair=()=>S.an.pairs[S.an.sel];
+function evFromSeg(seg,docs,cid){const d=docs.find(x=>x.id===seg.doc);return{docId:d.id,letter:d.letter,name:d.name,page:seg.page,segId:seg.id,quote:seg.text,cid}}
+function evFromChange(c,docs){const o=[];if(c.a)o.push(evFromSeg(c.a,docs,c.id));if(c.b)o.push(evFromSeg(c.b,docs,c.id));return o}
+function chLine(c){return`<li><b>${esc(c.title)}</b>${c.delta?` <span class="muted">(${esc(c.delta)})</span>`:''}</li>`}
+function answer(q){
+  const an=S.an,p=curPair(),docs=an.docs,ql=q.toLowerCase();
+  const pairNote=an.pairs.length>1?` (comparing ${p.A.letter} and ${p.B.letter})`:'';
+  const noChg='<p>The comparison found no differences, so there is nothing to report.</p>';
+  if(/stricter|strict|harsher|tougher/.test(ql)&&p){
+    const B=p.changes.filter(c=>c.stricter==='B'),A=p.changes.filter(c=>c.stricter==='A');
+    if(!B.length&&!A.length)return{ok:false,text:'<p><b>Insufficient evidence.</b> The differences found do not include a numeric limit, deadline, penalty or obligation that I can rank as stricter or more lenient.</p>'};
+    const lead=B.length===A.length?'The documents are balanced: each is stricter in the same number of places.':`<b>Document ${B.length>A.length?'B':'A'} (${esc((B.length>A.length?p.B:p.A).name)}) is stricter overall</b>, in ${Math.max(A.length,B.length)} of ${A.length+B.length} rankable changes.`;
+    return{ok:true,text:`<p>${lead}${pairNote}</p>${B.length?`<p>B is stricter on:</p><ul>${B.map(chLine).join('')}</ul>`:''}${A.length?`<p>A is stricter on:</p><ul>${A.map(chLine).join('')}</ul>`:''}<p class="muted" style="font-size:12.5px">Stricter is judged by keyword rules (for example higher minimum attendance, shorter deadline, higher penalty, an added “must”). Check each quote.</p>`,ev:[...B,...A].flatMap(c=>evFromChange(c,docs))}
+  }
+  if(/missing|only in|not in|absent|exist|information in one/.test(ql)&&p){
+    const ad=p.changes.filter(c=>c.kind==='added'),rm=p.changes.filter(c=>c.kind==='removed');
+    if(!ad.length&&!rm.length)return{ok:true,text:`<p>Nothing is missing from either document${pairNote}. Every clause in one has a counterpart in the other.</p>`,ev:[]};
+    return{ok:true,text:`<p>${rm.length} clause${rm.length===1?' appears':'s appear'} only in A and ${ad.length} only in B${pairNote}.</p>${rm.length?`<p><b>Only in A (missing from B):</b></p><ul>${rm.map(c=>`<li>${esc(c.a.text)}</li>`).join('')}</ul>`:''}${ad.length?`<p><b>Only in B (missing from A):</b></p><ul>${ad.map(c=>`<li>${esc(c.b.text)}</li>`).join('')}</ul>`:''}`,ev:[...rm,...ad].flatMap(c=>evFromChange(c,docs))};
+  }
+  if(/(deadline|amount|date|cost|fee|penalt|percent|number|figure|money|price)/.test(ql)&&/(chang|differ|updat|revis)/.test(ql)&&p){
+    const L=p.changes.filter(c=>c.types.some(t=>['date','deadline','amount','percentage'].includes(t)));
+    if(!L.length)return{ok:true,text:`<p>No changes to dates, deadlines, amounts or percentages were detected${pairNote}.</p>`,ev:[]};
+    return{ok:true,text:`<p>Yes. ${L.length} change${L.length===1?'':'s'} involve dates, deadlines, amounts or percentages${pairNote}:</p><ul>${L.map(chLine).join('')}</ul>`,ev:L.flatMap(c=>evFromChange(c,docs))};
+  }
+  if(/(summar|main difference|what changed|differences|what.?s different|key change|important change)/.test(ql)&&p){
+    if(!p.changes.length)return{ok:true,text:noChg,ev:[]};
+    const top=[...p.changes].sort((x,y)=>({hi:0,med:1,lo:2}[x.sev]-{hi:0,med:1,lo:2}[y.sev]));
+    return{ok:true,text:`<p>${esc(summarize(p))}</p><ul>${top.map(chLine).join('')}</ul>`,ev:top.flatMap(c=>evFromChange(c,docs))};
+  }
+  /* retrieval over every passage of every uploaded document */
+  const qt=[...new Set(toks(q))];
+  const pass=docs.flatMap(d=>d.segs);
+  if(!qt.length||!pass.length)return{ok:false,text:'<p><b>Insufficient evidence.</b> I could not find any searchable words in that question. Try asking about a specific topic, number or rule.</p>'};
+  const df={};pass.forEach(s=>new Set(s.t).forEach(w=>df[w]=(df[w]||0)+1));
+  const scored=pass.map(s=>{const set=new Set(s.t);let sc=0,hit=0;qt.forEach(w=>{if(set.has(w)){sc+=Math.log(1+pass.length/df[w]);hit++}});return{s,sc,hit}})
+    .filter(x=>x.hit>=Math.max(1,Math.ceil(qt.length*.5))).sort((a,b)=>b.sc-a.sc);
+  if(!scored.length)return{ok:false,text:`<p><b>Insufficient evidence.</b> None of the uploaded documents contain text that matches your question (searched for: ${qt.map(esc).join(', ')}). I will not guess. Try rephrasing, or check that the right documents are uploaded.</p>`};
+  const per={},pick=[];scored.forEach(x=>{per[x.s.doc]=(per[x.s.doc]||0)+1;if(per[x.s.doc]<=2&&pick.length<5)pick.push(x)});
+  const cmap=new Map();an.pairs.forEach(pp=>pp.changes.forEach(c=>{[c.a,c.b].forEach(s=>s&&cmap.set(s.id,c.id))}));
+  const ev=pick.map(x=>({...evFromSeg(x.s,docs,cmap.get(x.s.id)),hl:qt}));
+  const byDoc=docs.map(d=>({d,n:pick.filter(x=>x.s.doc===d.id).length}));
+  const miss=byDoc.filter(x=>!x.n).map(x=>`Document ${x.d.letter}`);
+  return{ok:true,text:`<p>These passages match your question. They are quoted exactly as written in the documents.${miss.length?` <b>${miss.join(' and ')} ${miss.length>1?'have':'has'} no matching text.</b>`:''}</p>`,ev};
+}
+
+/* ============================ file reading ============================ */
+async function unzipEntry(buf,name){
+  const dv=new DataView(buf);let e=-1;
+  for(let i=buf.byteLength-22;i>=Math.max(0,buf.byteLength-66000);i--)if(dv.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)throw new Error('This file is not a valid DOCX.');
+  const cnt=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);
+  for(let k=0;k<cnt;k++){
+    if(dv.getUint32(p,true)!==0x02014b50)break;
+    const method=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);
+    const nm=new TextDecoder().decode(new Uint8Array(buf,p+46,nl));
+    if(nm===name){
+      const ln=dv.getUint16(off+26,true),le=dv.getUint16(off+28,true);
+      const data=new Uint8Array(buf,off+30+ln+le,cs);
+      if(method===0)return new TextDecoder().decode(data);
+      const out=await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+      return new TextDecoder().decode(out);
+    }
+    p+=46+nl+el+cl;
+  }
+  throw new Error('This DOCX has no readable document body.');
+}
+async function readDocx(buf){
+  const xml=await unzipEntry(buf,'word/document.xml');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const paras=doc.getElementsByTagName('w:p');const pages=[[]];let breaks=0;
+  for(const p of paras){
+    let t='';
+    const walk=n=>{for(const c of n.childNodes){
+      if(c.nodeType!==1)continue;
+      const nm=c.nodeName;
+      if(nm==='w:t')t+=c.textContent;else if(nm==='w:tab')t+=' ';
+      else if(nm==='w:br'&&c.getAttribute('w:type')==='page'){pages[pages.length-1].push(t);t='';pages.push([]);breaks++}
+      else walk(c)}};
+    walk(p);pages[pages.length-1].push(t);
+  }
+  return pages.map((l,i)=>({page:breaks?i+1:null,text:l.join('\n')}));
+}
+let pdfReady=null;
+function loadPdfJs(){
+  if(window.pdfjsLib)return Promise.resolve();
+  if(pdfReady)return pdfReady;
+  pdfReady=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res()};
+    s.onerror=()=>{pdfReady=null;rej(new Error('The PDF reader could not be loaded. PDF reading needs an internet connection; try a DOCX or TXT file instead.'))};
+    document.head.appendChild(s);
+  });
+  return pdfReady;
+}
+async function readPdf(buf){
+  await loadPdfJs();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;const pages=[];
+  for(let n=1;n<=pdf.numPages;n++){
+    const tc=await(await pdf.getPage(n)).getTextContent();let y=null,line='';const lines=[];
+    tc.items.forEach(it=>{const yy=Math.round(it.transform[5]);if(y!==null&&Math.abs(yy-y)>3){lines.push(line);line=''}y=yy;line+=it.str+(it.hasEOL?'\n':'')});
+    lines.push(line);pages.push({page:n,text:lines.join('\n')});
+  }
+  return pages;
+}
+async function readFile(f){
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(ext==='txt'){const t=await f.text();const parts=t.split('\f');return parts.length>1?parts.map((x,i)=>({page:i+1,text:x})):[{page:null,text:t}]}
+  const buf=await f.arrayBuffer();
+  return ext==='docx'?readDocx(buf):readPdf(buf);
+}
+
+/* ============================ state ============================ */
+const S={route:'home',menu:false,files:[],errors:[],an:null,loading:false,
+  filt:{doc:'all',type:'all',sev:'all'},chat:[],thinking:false,draft:'',modal:null,focus:null,showRep:false,history:[],confirmReset:false};
+let fid=0;
+const DEMO_AN=buildAnalysis(DEMO_DOCS,true);
+try{S.history=JSON.parse(localStorage.getItem('dm_hist')||'[]')}catch(e){}
+function saveHist(){try{localStorage.setItem('dm_hist',JSON.stringify(S.history.slice(0,10)))}catch(e){}}
+function toast(msg,bad){
+  const el=document.createElement('div');el.className='toast'+(bad?' bad':'');el.innerHTML=(bad?ic('alert'):ic('check'))+'<span>'+esc(msg)+'</span>';
+  $('#toasts').appendChild(el);setTimeout(()=>el.remove(),4200);
+}
+function go(r){S.route=r;S.menu=false;if(location.hash!=='#'+r)history.replaceState(null,'','#'+r);render();window.scrollTo(0,0)}
+addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(['home','upload','compare','ask','insights'].includes(h)&&h!==S.route){S.route=h;render()}});
+
+/* ============================ analysis flow ============================ */
+function loadDemo(go_){
+  S.files=DEMO_DOCS.map(d=>({id:++fid,name:d.name,size:d.size,type:d.type,status:'ready',pages:d.pages,demo:true}));
+  S.errors=[];
+  if(go_)runAnalysis(true);else{go('upload');toast('Sample documents loaded. They are fictional and for demonstration only.')}
+}
+function runAnalysis(demo){
+  const ready=S.files.filter(f=>f.status==='ready');
+  if(ready.length<2){S.errors=['Add at least two readable documents to compare.'];render();return}
+  S.loading=true;S.route=demo?'compare':S.route;render();
+  setTimeout(()=>{
+    try{
+      S.an=buildAnalysis(ready.map(f=>({name:f.name,type:f.type,size:f.size,pages:f.pages})),demo);
+      S.chat=[];S.filt={doc:'all',type:'all',sev:'all'};
+      S.history.unshift({id:Date.now(),ts:Date.now(),demo,docs:ready.map(f=>({name:f.name,type:f.type,size:f.size,pages:f.pages})),total:S.an.pairs.map(p=>p.counts.total).reduce((a,b)=>a+b,0)});
+      saveHist();S.loading=false;toast(demo?'Demo comparison ready (fictional sample data).':'Analysis complete.');go('compare');
+    }catch(e){S.loading=false;S.errors=['Analysis failed: '+e.message];render()}
+  },650);
+}
+function resetAll(){S.an=null;S.files=[];S.chat=[];S.errors=[];S.confirmReset=false;S.showRep=false;toast('Comparison reset.');go('upload')}
+
+async function addFiles(list){
+  S.errors=[];
+  for(const f of list){
+    const ext=f.name.split('.').pop().toLowerCase();
+    if(ext==='doc'){S.errors.push(`“${f.name}” is an old .doc file. Save it as DOCX or PDF and upload it again.`);continue}
+    if(!['pdf','docx','txt'].includes(ext)){S.errors.push(`“${f.name}” is not supported. Please upload PDF, DOCX or TXT files.`);continue}
+    if(f.size>15*1048576){S.errors.push(`“${f.name}” is larger than 15 MB. Try a smaller file.`);continue}
+    if(f.size===0){S.errors.push(`“${f.name}” is empty.`);continue}
+    if(S.files.some(x=>x.name===f.name&&x.size===f.size)){S.errors.push(`“${f.name}” is already in the list.`);continue}
+    const it={id:++fid,name:f.name,size:f.size,type:ext.toUpperCase(),status:'reading',pages:[]};
+    S.files.push(it);render();
+    try{
+      it.pages=await readFile(f);
+      const words=it.pages.reduce((n,p)=>n+p.text.split(/\s+/).filter(Boolean).length,0);
+      if(words<5)throw new Error('No readable text found. Scanned PDFs need OCR, which this version does not do.');
+      it.words=words;it.status='ready';
+    }catch(e){it.status='error';it.err=e.message;S.errors.push(`“${f.name}”: ${e.message}`)}
+    render();
+  }
+}
+
+/* ============================ rendering ============================ */
+function render(){
+  const y=scrollY;
+  const inApp=['upload','compare','ask','insights'].includes(S.route);
+  $('#app').innerHTML=navHTML()+(inApp?tabsHTML():'')+({home:homeHTML,upload:uploadHTML,compare:compareHTML,ask:askHTML,insights:insightsHTML}[S.route]||homeHTML)()+footHTML()+(S.modal?modalHTML():'');
+  scrollTo(0,y);
+  if(S.route==='ask'){const m=$('#msgs-end');if(S.chatScroll){m&&m.scrollIntoView({block:'end'});S.chatScroll=false}}
+  if(S.focus&&S.route==='compare'){const id=S.focus;S.focus=null;focusChange(id)}
+}
+function navHTML(){
+  return`<header class="nav"><div class="wrap">
+  <button class="logo" data-act="go" data-r="home" aria-label="DocuMind AI home"><span class="logo-mark">${ic('logo')}</span>DocuMind AI</button>
+  <button class="btn sm menu-btn" data-act="menu" aria-label="Menu">${ic('menu')}</button>
+  <nav class="nav-links${S.menu?' open':''}">
+   <button class="lnk" data-act="scroll" data-t="features">Features</button>
+   <button class="lnk" data-act="scroll" data-t="how">How it works</button>
+   <button class="lnk" data-act="scroll" data-t="usecases">Use cases</button>
+   <button class="btn primary sm" data-act="go" data-r="upload">Get started</button>
+  </nav></div></header>`;
+}
+function tabsHTML(){
+  const t=[['upload','upload','Upload'],['compare','layers','Compare'],['ask','chat','Ask DocuMind'],['insights','chart','Insights & Reports']];
+  return`<div class="tabs"><div class="wrap">${t.map(([r,i,l])=>`<button class="tab${S.route===r?' on':''}" data-act="go" data-r="${r}">${ic(i)}${l}</button>`).join('')}${S.an?.demo?'<span class="pill demo" style="margin-left:auto">Demo data (fictional)</span>':''}</div></div>`;
+}
+function footHTML(){
+  return`<footer><div class="wrap foot">
+   <div><div class="logo" style="margin-bottom:10px"><span class="logo-mark">${ic('logo')}</span>DocuMind AI</div><p class="muted">Ask Questions. Compare Documents. Find the Truth.</p><p class="muted" style="margin-top:8px;font-size:13px">Sample documents in this prototype are fictional and for demonstration only.</p></div>
+   <div><h4>Project</h4><ul><li>Problem ID: PS-025</li><li>Domain: Artificial Intelligence and Machine Learning</li><li>CBC 2.0 Hackathon, design round</li></ul></div>
+   <div><h4>Team AI AVENGERS · CBC083</h4><ul><li>Bhavana N</li><li>Inchara M</li><li>Ganavi KL</li><li>Darshini PJ</li></ul><p class="muted" style="margin-top:8px;font-size:13px">Global Academy of Technology</p></div>
+  </div></footer>`;
+}
+let heroSeen=false;
+function homeHTML(){
+  const p=DEMO_AN.pairs[0];
+  const play=!heroSeen;heroSeen=true;
+  const rows=p.changes.filter(c=>c.facts.length).slice(0,3).map((c,i)=>`<div class="rl" style="--i:${i}"><div class="rl-t"><span>${esc(c.topic)}</span><span class="pill ${c.sev}">${SEVL[c.sev]}</span></div><div class="rl-v"><span class="rl-old">${esc(c.facts[0].from)}</span><span class="rl-new">${esc(c.facts[0].to)}</span></div><div class="rl-d">${esc(c.delta)}</div></div>`).join('');
+  const feats=[['layers','Smart comparison','Matches clauses across documents and flags what was added, removed or modified, with dates, amounts and deadlines picked out.'],['chat','AI question answering','Ask in plain English. Questions are answered from the text of your own documents.'],['search','Missing information detection','See clauses that exist in one document but not the other, grouped by topic.'],['shield','Evidence-backed answers','Every answer shows the document name, page when available, and the exact quote. If the text is not there, it says so.']];
+  const uses=[['gavel','Legal contracts','Compare contract versions and see changed amounts, notice periods and obligations.'],['book','College policies','Spot changes in attendance rules, deadlines and penalties between policy revisions.'],['chart','Business reports','Check what moved between quarterly or annual reports.'],['shield','Compliance documents','Find clauses that appear in one regulation or standard but not another.']];
+  return`<main>
+  <section class="hero"><div class="wrap hero-grid">
+   <div>
+    <h1>Stop reading documents. Start finding answers.</h1>
+    <p class="sub">DocuMind AI reads two or more documents, shows exactly what changed, finds what is missing, and answers your questions with quotes from the source text.</p>
+    <div class="cta"><button class="btn primary" data-act="go" data-r="upload">Start comparing</button><button class="btn" data-act="demo">${ic('eye')} Try live demo</button></div>
+    <p class="fine">Works with PDF, DOCX and TXT files, read right in your browser.</p>
+   </div>
+   <div class="sheet-wrap"><div class="sheet${play?' play':''}" role="img" aria-label="Preview: an attendance policy compared across two versions, with changed values struck through and highlighted">
+    <div class="sheet-top"><b>Attendance policy, v1 and v2</b><span class="pill demo">Demo data</span></div>
+    ${rows}
+    <div class="quote"><div class="q-h"><span class="pill vio">B</span>Document B, page 2</div>Late submissions receive a <mark>10%</mark> penalty on the marks awarded.</div>
+    <div class="tags"><span class="pill hi">${p.counts.high} high priority</span><span class="pill add">${p.counts.added} added</span><span class="pill rem">${p.counts.removed} removed</span></div>
+   </div>
+   <div class="float f1">${ic('check')} ${p.counts.total} changes found</div>
+   <div class="float f2">${ic('quote')} Cited from page 2</div></div>
+  </div></section>
+  <div class="strip"><div class="wrap"><span>${ic('file')} PDF, DOCX and TXT</span><span>${ic('shield')} Runs in your browser</span><span>${ic('quote')} Every answer cites its source</span><span>${ic('layers')} Two or more documents</span></div></div>
+  <section class="block" id="features"><div class="wrap">
+   <div class="sec-h"><h2>Built to answer “what changed?” with proof</h2></div>
+   <div class="feats">${feats.map(f=>`<div class="feat"><div class="fi">${ic(f[0])}</div><div><h3>${f[1]}</h3><p>${f[2]}</p></div></div>`).join('')}</div>
+   <div class="note" style="margin-top:36px">${ic('info')}<span>How answers are made in this version: differences come from a text-matching engine that runs in your browser, and questions are answered by rules and keyword search over your documents. No language model is connected, so nothing is generated or invented.</span></div>
+  </div></section>
+  <section class="block" id="proof"><div class="wrap proof">
+   <div><h2>Every answer shows its source</h2><p class="lede">Ask in plain English. DocuMind quotes the passage it found and tells you which document and page it came from. If the text is not there, it says so instead of guessing.</p>
+    <ul class="ticks"><li>${ic('check')}Exact quotes from your own documents</li><li>${ic('check')}Open the full document at the highlighted passage</li><li>${ic('check')}Jump from an answer to the change behind it</li></ul></div>
+   <div class="mock" role="img" aria-label="Example question and a cited answer">
+    <div class="bubble u">What is the late submission penalty in each version?</div>
+    <div class="bubble ai"><p>Version 1 deducts 5% of the marks awarded. Version 2 doubles that to 10%.</p>
+     <div class="evs"><div class="ev-l">Evidence: 2 sources</div>
+      <div class="evc"><div class="q-h"><span class="pill vio">A</span>Attendance-Policy-v1, page 2</div>“Late submissions receive a <mark class="q">5%</mark> penalty on the marks awarded.”</div>
+      <div class="evc"><div class="q-h"><span class="pill vio">B</span>Attendance-Policy-v2, page 2</div>“Late submissions receive a <mark class="q">10%</mark> penalty on the marks awarded.”</div></div></div>
+   </div>
+  </div></section>
+  <section class="block alt" id="how"><div class="wrap">
+   <div class="sec-h"><h2>Three steps from files to answers</h2></div>
+   <div class="how">${[['Upload','Drop in two or more PDF, DOCX or TXT files. Text is read page by page.'],['Compare','Clauses are matched, and changes are grouped by topic and ranked by priority.'],['Ask','Ask questions and open the exact source text behind every answer.']].map((s,i)=>`<div class="how-i"><div class="n">${i+1}</div><h3>${s[0]}</h3><p>${s[1]}</p></div>`).join('')}</div>
+  </div></section>
+  <section class="block dark" id="usecases"><div class="wrap">
+   <div class="sec-h"><h2>For anyone who compares documents</h2></div>
+   <div class="uses">${uses.map(u=>`<div class="use"><div class="fi">${ic(u[0])}</div><h3>${u[1]}</h3><p>${u[2]}</p></div>`).join('')}</div>
+  </div></section>
+  <section class="block"><div class="wrap"><div class="final">
+   <h2>Know what changed before you sign.</h2>
+   <p>Load the sample policies and see the whole workflow in one click. No upload needed.</p>
+   <div class="cta"><button class="btn hl" data-act="demo">${ic('eye')} Try live demo</button><button class="btn" data-act="go" data-r="upload">Upload your documents</button></div>
+  </div></div></section></main>`;
+}
+function uploadHTML(){
+  const ready=S.files.filter(f=>f.status==='ready').length,busy=S.files.some(f=>f.status==='reading');
+  const stat=f=>f.status==='ready'?`<span class="pill ok">${ic('check')} Ready${f.pages?.length?` · ${f.pages.length} page${f.pages.length>1?'s':''}`:''}</span>`:f.status==='reading'?`<span class="pill"><span class="spin"></span> Reading…</span>`:`<span class="pill hi">${ic('alert')} Error</span>`;
+  return`<main class="app"><div class="wrap">
+   <h1>Upload documents</h1><p class="lead">Add two or more documents to compare. Supported formats: PDF, DOCX and TXT, up to 15 MB each.</p>
+   <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload documents" data-act="pick"><div class="big">${ic('upload')}</div><h3>Drag and drop files here</h3><p class="muted">or click to browse</p></div>
+   <input id="file" type="file" multiple accept=".pdf,.docx,.txt" hidden>
+   ${S.errors.length?`<div class="grid" style="margin-top:14px">${S.errors.map(e=>`<div class="err" role="alert">${ic('alert')}<span>${esc(e)}</span></div>`).join('')}</div>`:''}
+   <div class="grid" style="margin-top:20px;gap:10px">
+   ${S.files.length?S.files.map(f=>`<div class="file-row"><div class="ftype">${f.type}</div><div style="min-width:0"><div class="nm">${esc(f.name)}${f.demo?' <span class="pill demo">demo</span>':''}</div><div class="muted" style="font-size:12.5px">${fmtSize(f.size)}${f.words?` · ${f.words.toLocaleString()} words`:''}${f.err?` · <span style="color:var(--hi)">${esc(f.err)}</span>`:''}</div></div><div class="st">${stat(f)}</div><button class="btn sm ghost danger" data-act="rm" data-id="${f.id}" aria-label="Remove ${esc(f.name)}">${ic('trash')}</button></div>`).join(''):`<div class="empty"><h3>No documents yet</h3><p class="muted">Upload files above, or load the two fictional sample policies to see the full workflow.</p></div>`}
+   </div>
+   <div class="row" style="margin-top:20px">
+    <button class="btn primary" data-act="analyze" ${ready<2||busy||S.loading?'disabled':''}>${S.loading?'<span class="spin"></span> Analyzing…':ic('spark')+' Analyze documents'}</button>
+    <button class="btn" data-act="sample">${ic('file')} Load sample documents</button>
+    <button class="btn" data-act="demo">${ic('eye')} Try live demo</button>
+    ${S.files.length?`<button class="btn ghost danger" data-act="clearfiles">Clear all</button>`:''}
+    ${ready<2&&S.files.length?`<span class="muted" style="font-size:13px">${ready===0?'Waiting for readable documents.':'Add one more document to compare.'}</span>`:''}
+   </div>
+   <div class="grid g2" style="margin-top:32px">
+    <div class="card"><h3>Sample documents (fictional)</h3><p>Two versions of a made-up college attendance policy. Attendance rises from 75% to 85%, the assignment window shrinks from 7 to 5 days, and the late penalty doubles from 5% to 10%. For demonstration only.</p></div>
+    <div class="card"><h3>Recent comparisons</h3>${historyHTML(true)}</div>
+   </div></div></main>`;
+}
+function historyHTML(compact){
+  if(!S.history.length)return'<p class="muted">Nothing yet. Completed comparisons are saved in this browser.</p>';
+  return`<div class="hist">${S.history.slice(0,compact?3:10).map(h=>`<div class="hist-r"><div style="min-width:0"><div style="font-weight:600;overflow-wrap:anywhere">${h.docs.map(d=>esc(d.name)).join('  vs  ')}</div><div class="muted" style="font-size:12.5px">${new Date(h.ts).toLocaleString()} · ${h.total} difference${h.total===1?'':'s'} ${h.demo?'· <b>demo data</b>':''}</div></div><div class="row"><button class="btn sm" data-act="openhist" data-id="${h.id}">Open</button><button class="btn sm ghost danger" data-act="delhist" data-id="${h.id}" aria-label="Delete">${ic('trash')}</button></div></div>`).join('')}</div>`;
+}
+function emptyState(t){
+  return`<main class="app"><div class="wrap"><div class="empty"><h3>No comparison yet</h3><p class="muted" style="max-width:52ch;margin:0 auto 18px">${t}</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="go" data-r="upload">Upload documents</button><button class="btn" data-act="demo">${ic('eye')} Try live demo</button></div></div></div></main>`;
+}
+const TYPES=[['all','All'],['added','Added'],['removed','Removed'],['modified','Modified'],['date','Dates'],['amount','Amounts'],['percentage','Percentages'],['deadline','Deadlines'],['rule','Rules']];
+function visible(c){
+  const f=S.filt;
+  if(f.doc==='A'&&c.kind!=='removed')return false;
+  if(f.doc==='B'&&c.kind!=='added')return false;
+  if(f.doc==='both'&&c.kind!=='modified')return false;
+  if(f.type!=='all'&&!c.types.includes(f.type))return false;
+  if(f.sev!=='all'&&c.sev!==f.sev)return false;
+  return true;
+}
+const SEVL={hi:'High',med:'Medium',lo:'Low'};
+function paneHTML(d,p){
+  let last=null,seen=new Set(p.changes.filter(visible).map(c=>c.id));
+  return d.segs.map(s=>{
+    const inf=p.segInfo[s.id];let h='';
+    if(s.section!==last){last=s.section;if(s.section)h+=`<div class="sec-l">${esc(s.section)}</div>`}
+    const cls=inf?inf.kind+(seen.has(inf.cid)?'':' faded'):'';
+    h+=`<div class="seg ${cls}" data-seg="${s.id}" ${inf?`data-act="seg" data-cid="${inf.cid}" title="Click to see this change"`:''}><span class="pg">${s.page?'p'+s.page:''}</span><span class="tx">${inf?inf.html:esc(s.text)}</span></div>`;
+    return h;
+  }).join('');
+}
+function compareHTML(){
+  if(!S.an)return emptyState('Upload at least two documents and click Analyze, or load the fictional sample policies with one click.');
+  const an=S.an,p=curPair(),c=p.counts;
+  const vis=p.changes.filter(visible);
+  const groups={};vis.forEach(x=>(groups[x.topic]=groups[x.topic]||[]).push(x));
+  const order=Object.keys(groups).sort((a,b)=>groups[b].filter(x=>x.sev==='hi').length-groups[a].filter(x=>x.sev==='hi').length);
+  const chip=(g,v,l)=>`<button class="chip${S.filt[g]===v?' on':''}" data-act="filt" data-g="${g}" data-v="${v}">${l}</button>`;
+  const ad=p.changes.filter(x=>x.kind==='added'),rm=p.changes.filter(x=>x.kind==='removed');
+  return`<main class="app"><div class="wrap">
+   <div class="row" style="justify-content:space-between"><div><h1>Comparison dashboard</h1><p class="lead">${esc(p.A.name)} <b>vs</b> ${esc(p.B.name)}</p></div>
+   ${an.pairs.length>1?`<label class="row">Compare <select id="pairsel" aria-label="Choose document pair">${an.pairs.map((q,i)=>`<option value="${i}"${i===an.sel?' selected':''}>${q.A.letter}: ${esc(q.A.name)} ↔ ${q.B.letter}: ${esc(q.B.name)}</option>`).join('')}</select></label>`:''}</div>
+   <div class="tiles">
+    <div class="tile"><div class="v">${c.total}</div><div class="l">Changes found</div></div>
+    <div class="tile"><div class="v" style="color:var(--hi)">${c.high}</div><div class="l">High priority</div></div>
+    <div class="tile"><div class="v" style="color:var(--med)">${c.medium}</div><div class="l">Medium</div></div>
+    <div class="tile"><div class="v" style="color:var(--lo)">${c.low}</div><div class="l">Low</div></div>
+    <div class="tile"><div class="v" style="color:var(--ok)">${c.added}</div><div class="l">Only in B</div></div>
+    <div class="tile"><div class="v" style="color:var(--hi)">${c.removed}</div><div class="l">Only in A</div></div>
+   </div>
+   <div class="legend"><span><i style="background:var(--add-bg)"></i>Added</span><span><i style="background:var(--del-bg)"></i>Removed</span><span><i style="background:var(--mod-bg)"></i>Modified (changed words are bold)</span><span class="muted">Click a highlighted sentence to jump to its change.</span></div>
+   <div class="panes">${[p.A,p.B].map(d=>`<div class="pane"><div class="pane-h"><span class="pill vio">${d.letter}</span><span class="t">${esc(d.name)}</span></div><div class="pane-b" data-pane="${d.id}">${paneHTML(d,p)}</div></div>`).join('')}</div>
+   <h2 style="margin-top:36px;font-size:1.3rem">Changes by topic</h2>
+   <div class="filters" style="margin-top:12px">
+    <div class="fgroup"><span>Document</span>${chip('doc','all','All')}${chip('doc','A','Only in A')}${chip('doc','B','Only in B')}${chip('doc','both','Modified in both')}</div>
+    <div class="fgroup"><span>Type</span>${TYPES.map(t=>chip('type',t[0],t[1])).join('')}</div>
+    <div class="fgroup"><span>Severity</span>${chip('sev','all','All')}${chip('sev','hi','High')}${chip('sev','med','Medium')}${chip('sev','lo','Low')}</div>
+    ${(S.filt.doc!=='all'||S.filt.type!=='all'||S.filt.sev!=='all')?`<button class="btn sm ghost" data-act="clearfilt">Clear filters</button>`:''}
+   </div>
+   ${!c.total?`<div class="empty"><h3>No differences found</h3><p class="muted">Every sentence in one document has a matching sentence in the other.</p></div>`:
+     !vis.length?`<div class="empty"><h3>No changes match these filters</h3><p class="muted">Try clearing a filter.</p><button class="btn" data-act="clearfilt" style="margin-top:10px">Clear filters</button></div>`:
+     order.map(t=>`<div class="topic"><h3>${esc(t)} <span class="pill">${groups[t].length}</span></h3>${groups[t].map(changeCard).join('')}</div>`).join('')}
+   <h2 style="margin-top:40px;font-size:1.3rem">Missing information</h2>
+   <div class="grid g2" style="margin-top:12px">
+    <div class="card"><h3>In A but missing from B</h3>${rm.length?`<div class="mlist" style="margin-top:10px">${rm.map(x=>`<div class="mi">${esc(x.a.text)}<div class="muted mono" style="font-size:11px;margin-top:4px">${esc(x.topic)}${x.a.page?' · page '+x.a.page:''}</div></div>`).join('')}</div>`:'<p>Nothing is missing from B.</p>'}</div>
+    <div class="card"><h3>In B but missing from A</h3>${ad.length?`<div class="mlist" style="margin-top:10px">${ad.map(x=>`<div class="mi">${esc(x.b.text)}<div class="muted mono" style="font-size:11px;margin-top:4px">${esc(x.topic)}${x.b.page?' · page '+x.b.page:''}</div></div>`).join('')}</div>`:'<p>Nothing is missing from A.</p>'}</div>
+   </div>
+   ${(p.onlyTopicsA.length||p.onlyTopicsB.length)?`<p class="muted" style="margin-top:12px;font-size:13.5px">Whole topics present in only one document: ${p.onlyTopicsA.map(t=>esc(t)+' (A)').concat(p.onlyTopicsB.map(t=>esc(t)+' (B)')).join(', ')}.</p>`:''}
+  </div></main>`;
+}
+function changeCard(c){
+  const p=curPair();
+  const pg=s=>s.page?`page ${s.page}`:'page n/a';
+  const quote=(s,html,l,d)=>s?`<div class="quote"><div class="q-h"><span class="pill vio">${l}</span>${esc(d.name)} · ${pg(s)}</div>${html}</div>`:`<div class="quote none">Not found in Document ${l}.</div>`;
+  const kindP={added:'<span class="pill add">Added</span>',removed:'<span class="pill rem">Removed</span>',modified:'<span class="pill med">Modified</span>'}[c.kind];
+  const typeLab={date:'Date',amount:'Amount',percentage:'Percentage',deadline:'Deadline',rule:'Rule',wording:'Wording'};
+  return`<div class="chg ${c.sev}" id="chg-${c.id}">
+   <div class="chg-h"><b>${esc(c.title)}</b><div class="tags">${kindP}${c.types.filter(t=>typeLab[t]).map(t=>`<span class="pill">${typeLab[t]}</span>`).join('')}<span class="pill ${c.sev}">${SEVL[c.sev]}</span></div></div>
+   <div class="delta">${esc(c.delta||'')}${c.stricter?` <span class="pill vio" title="Heuristic based on keywords">${c.stricter} looks stricter</span>`:''}</div>
+   <div class="ev">${quote(c.a,c.htmlA,'A',p.A)}${quote(c.b,c.htmlB,'B',p.B)}</div>
+   <div class="row" style="margin-top:10px"><button class="btn sm" data-act="locate" data-cid="${c.id}">${ic('target')} Locate in documents</button><button class="btn sm" data-act="askabout" data-cid="${c.id}">${ic('chat')} Ask about this</button></div></div>`;
+}
+function focusChange(id){
+  const el=$('#chg-'+id);if(!el)return;
+  el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800);
+}
+function locate(cid){
+  const p=curPair(),c=p.changes.find(x=>x.id===cid);if(!c)return;
+  [c.a,c.b].forEach(s=>{if(!s)return;const el=$(`[data-seg="${s.id}"]`);if(!el)return;
+    const pane=el.closest('.pane-b');pane.scrollTo({top:el.offsetTop-pane.offsetTop-60,behavior:'smooth'});
+    el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800)});
+  const pn=$('.panes');if(pn)pn.scrollIntoView({block:'center',behavior:'smooth'});
+}
+const SUGG=['What are the main differences?','Which document has stricter conditions?','What information is missing?','Have any deadlines or amounts changed?','Summarize the important changes.'];
+function evCard(e,i,j){
+  const q=e.hl?esc(e.quote).replace(new RegExp('\\b('+e.hl.map(w=>w.replace(/[^a-z0-9]/gi,'')).filter(Boolean).join('|')+')\\w*','gi'),m=>`<mark class="q">${m}</mark>`):esc(e.quote);
+  return`<div class="evc"><div class="q-h"><span class="pill vio">${e.letter}</span>${esc(e.name)} · ${e.page?'page '+e.page:'page n/a (this format has no page numbers)'}</div>“${q}”<div class="acts"><button class="btn sm" data-act="openev" data-m="${i}" data-e="${j}">${ic('eye')} Open evidence</button>${e.cid?`<button class="btn sm" data-act="viewchg" data-cid="${e.cid}">${ic('layers')} View change</button>`:''}</div></div>`;
+}
+function askHTML(){
+  if(!S.an)return emptyState('Ask DocuMind works on documents you have analyzed. Upload files, or load the fictional sample policies to try it.');
+  return`<main class="app"><div class="wrap" style="max-width:860px">
+   <h1>Ask DocuMind AI</h1><p class="lead">Ask about ${S.an.docs.length} document${S.an.docs.length>1?'s':''}: ${S.an.docs.map(d=>`${d.letter}: ${esc(d.name)}`).join(', ')}. ${S.an.demo?'<span class="pill demo">Demo data</span>':''}</p>
+   <div class="note" style="margin-top:14px">${ic('info')}<span><b>Answer engine: comparison rules + keyword search.</b> No language model is connected in this version, so answers only quote or summarize text found in your documents. When nothing matches, it says there is insufficient evidence.</span></div>
+   <div class="msgs" style="margin-top:18px">
+    ${S.chat.length?'':`<div class="card"><h3>Try a suggested question</h3><div class="sugg" style="margin-top:12px">${SUGG.map(s=>`<button class="chip" data-act="sugg" data-q="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>`}
+    ${S.chat.map((m,i)=>m.role==='user'?`<div class="bubble u">${esc(m.text)}</div>`:`<div class="bubble ai${m.ok?'':' insuff'}">${m.ok?'':`<div class="row" style="margin-bottom:6px">${ic('alert')}<b>Insufficient evidence</b></div>`}${m.text}${m.ev?.length?`<div class="evs"><div class="ev-l">Evidence: ${m.ev.length} source${m.ev.length>1?'s':''}</div>${m.ev.map((e,j)=>evCard(e,i,j)).join('')}</div>`:''}</div>`).join('')}
+    ${S.thinking?`<div class="bubble ai"><span class="spin"></span> Searching the documents…</div>`:''}
+    <div id="msgs-end"></div>
+   </div>
+   ${S.chat.length?`<div class="sugg" style="margin-bottom:12px">${SUGG.map(s=>`<button class="chip" data-act="sugg" data-q="${esc(s)}">${esc(s)}</button>`).join('')}</div>`:''}
+   <form class="compose" id="chatform"><textarea id="q" rows="1" placeholder="Ask a question about your documents…" aria-label="Your question">${esc(S.draft)}</textarea><button class="btn primary" type="submit" ${S.thinking?'disabled':''}>${ic('send')} Ask</button></form>
+  </div></main>`;
+}
+function ask(q){
+  q=q.trim();if(!q||S.thinking)return;
+  S.chat.push({role:'user',text:q});S.draft='';S.thinking=true;S.chatScroll=true;render();
+  setTimeout(()=>{
+    let r;try{r=answer(q)}catch(e){r={ok:false,text:'<p>Something went wrong while searching: '+esc(e.message)+'</p>'}}
+    S.chat.push({role:'ai',...r});S.thinking=false;S.chatScroll=true;render();const t=$('#q');t&&t.focus();
+  },450);
+}
+function modalHTML(){
+  const m=S.modal,d=S.an.docs.find(x=>x.id===m.docId);let last=null;
+  return`<div class="modal-bg" data-act="closemodal"><div class="modal" role="dialog" aria-modal="true" aria-label="Evidence"><div class="modal-h"><div><b>${d.letter}: ${esc(d.name)}</b><div class="muted" style="font-size:12.5px">The matching passage is highlighted</div></div><button class="btn sm" data-act="closemodal" aria-label="Close">${ic('x')}</button></div><div class="modal-b">${d.segs.map(s=>{let h='';if(s.section!==last){last=s.section;if(s.section)h+=`<div class="sec-l">${esc(s.section)}</div>`}return h+`<div class="seg${s.id===m.segId?' hl':''}" data-seg="m-${s.id}"><span class="pg">${s.page?'p'+s.page:''}</span><span class="tx">${esc(s.text)}</span></div>`}).join('')}</div></div></div>`;
+}
+function insightsHTML(){
+  if(!S.an)return emptyState('Insights are generated from an analyzed comparison. Upload documents, or load the fictional sample policies.');
+  const p=curPair(),c=p.counts,max=Math.max(1,c.high,c.medium,c.low);
+  const types={};p.changes.forEach(x=>x.types.forEach(t=>{if(!['added','removed','modified'].includes(t))types[t]=(types[t]||0)+1}));
+  const tl={date:'Dates',amount:'Amounts',percentage:'Percentages',deadline:'Deadlines',rule:'Rules',wording:'Wording'};
+  const tmax=Math.max(1,...Object.values(types));
+  const contra=p.changes.filter(x=>x.kind==='modified'&&x.facts.length);
+  const miss=p.changes.filter(x=>x.kind!=='modified');
+  const bar=(l,v,m,col)=>`<div class="bar-r"><span>${l}</span><div class="bar-t"><div class="bar-f" style="width:${v/m*100}%;background:${col}"></div></div><b class="mono">${v}</b></div>`;
+  return`<main class="app"><div class="wrap">
+   <div class="row" style="justify-content:space-between"><div><h1>Insights &amp; reports</h1><p class="lead">${esc(p.A.name)} <b>vs</b> ${esc(p.B.name)} ${S.an.demo?'<span class="pill demo">Demo data</span>':''}</p></div>
+   ${S.an.pairs.length>1?`<select id="pairsel" aria-label="Choose document pair">${S.an.pairs.map((q,i)=>`<option value="${i}"${i===S.an.sel?' selected':''}>${q.A.letter} ↔ ${q.B.letter}</option>`).join('')}</select>`:''}</div>
+   <div class="card" style="margin-top:20px"><h3 style="margin-bottom:8px">Summary</h3><p style="font-size:1.05rem">${esc(summarize(p))}</p>
+     <p class="muted" style="font-size:12.5px;margin-top:8px">Written by a template from the computed differences. It is not generated by a language model.</p></div>
+   <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-bottom:12px">Changes by priority</h3><div class="bars">${bar('High',c.high,max,'var(--hi)')}${bar('Medium',c.medium,max,'var(--med)')}${bar('Low',c.low,max,'var(--lo)')}</div></div>
+    <div class="card"><h3 style="margin-bottom:12px">Changes by type</h3><div class="bars">${Object.keys(types).length?Object.entries(types).map(([k,v])=>bar(tl[k]||k,v,tmax,'var(--violet)')).join(''):'<p class="muted">No changes to chart.</p>'}</div></div>
+   </div>
+   <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3>Important changes &amp; contradictions</h3><p class="muted" style="margin-bottom:10px">Same clause, different value in each document.</p>${contra.length?`<div class="mlist">${contra.map(x=>`<div class="mi"><b>${esc(x.title)}</b><div class="muted" style="font-size:13px">${esc(x.delta)}</div></div>`).join('')}</div>`:'<p>No conflicting values found.</p>'}</div>
+    <div class="card"><h3>Missing clauses</h3><p class="muted" style="margin-bottom:10px">Present in only one document.</p>${miss.length?`<div class="mlist">${miss.map(x=>`<div class="mi"><span class="pill ${x.kind==='added'?'add':'rem'}">${x.kind==='added'?'Only in B':'Only in A'}</span> ${esc((x.a||x.b).text)}</div>`).join('')}</div>`:'<p>No clauses are missing from either document.</p>'}</div>
+   </div>
+   <div class="card" style="margin-top:16px"><h3>Report</h3><p class="muted" style="margin:6px 0 14px">Export the comparison with quotes and page references.</p>
+    <div class="row"><button class="btn primary" data-act="csv">${ic('dl')} Download CSV</button><button class="btn primary" data-act="pdf">${ic('dl')} Download PDF</button><button class="btn" data-act="copyrep">${ic('copy')} Copy report text</button><button class="btn ghost" data-act="togglerep">${S.showRep?'Hide':'Preview'} report</button></div>
+    <p class="muted" style="font-size:12.5px;margin-top:10px">If your viewer blocks downloads, use Copy report text or open this page in a regular browser tab.</p>
+    ${S.showRep?`<pre class="rep" style="margin-top:12px">${esc(reportText())}</pre>`:''}</div>
+   <div class="grid g2" style="margin-top:16px">
+    <div class="card"><h3>Comparison history</h3><div style="margin-top:12px">${historyHTML(false)}</div></div>
+    <div class="card"><h3>Reset comparison</h3><p class="muted" style="margin:6px 0 14px">Clears the uploaded documents, results and chat. Saved history is kept.</p>
+     ${S.confirmReset?`<div class="row"><span>Reset everything?</span><button class="btn danger sm" data-act="reset">Yes, reset</button><button class="btn sm" data-act="noreset">Cancel</button></div>`:`<button class="btn danger" data-act="askreset">${ic('refresh')} Reset comparison</button>`}</div>
+   </div></div></main>`;
+}
+
+/* ============================ reports ============================ */
+function reportText(){
+  const p=curPair(),L=[];
+  L.push('DocuMind AI - Comparison Report','Team AI AVENGERS | CBC083 | PS-025','');
+  L.push(`Document A: ${p.A.name}`,`Document B: ${p.B.name}`,`Generated: ${new Date().toLocaleString()}`);
+  L.push(S.an.demo?'DATA SOURCE: DEMO DATA (fictional sample documents, for demonstration only)':'DATA SOURCE: uploaded documents');
+  L.push('Engine: text-matching and keyword rules. No language model was used.','');
+  L.push('SUMMARY',summarize(p),'');
+  L.push(`CHANGES (${p.changes.length})`);
+  p.changes.forEach(c=>{
+    L.push(`${c.n}. [${SEVL[c.sev].toUpperCase()}] ${c.title}`);
+    if(c.delta)L.push(`   Change: ${c.delta}`);
+    if(c.stricter)L.push(`   Stricter (keyword heuristic): Document ${c.stricter}`);
+    L.push(`   A${c.a?.page?' (p.'+c.a.page+')':''}: ${c.a?'"'+c.a.text+'"':'not present'}`);
+    L.push(`   B${c.b?.page?' (p.'+c.b.page+')':''}: ${c.b?'"'+c.b.text+'"':'not present'}`,'');
+  });
+  return L.join('\n');
+}
+function save(blob,name){
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('Download started: '+name)}
+  catch(e){toast('Download was blocked. Use “Copy report text” instead.',true)}
+}
+function csvDownload(){
+  const p=curPair(),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const rows=[['id','topic','kind','types','severity','change','delta','stricter_heuristic','doc_a_page','doc_a_text','doc_b_page','doc_b_text'].map(q).join(',')];
+  p.changes.forEach(c=>rows.push([c.n,c.topic,c.kind,c.types.join('|'),SEVL[c.sev],c.title,c.delta,c.stricter||'',c.a?.page||'',c.a?.text||'',c.b?.page||'',c.b?.text||''].map(q).join(',')));
+  save(new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv'}),'documind-report.csv');
+}
+function pdfDownload(){
+  const clean=s=>s.replace(/→/g,'->').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/[–—−]/g,'-').replace(/•/g,'-').replace(/₹/g,'Rs ').replace(/↔/g,'<->').replace(/[^\x20-\x7e]/g,'?');
+  const lines=[];reportText().split('\n').forEach(l=>{l=clean(l);const ind=l.match(/^\s*/)[0];while(l.length>92){let k=l.lastIndexOf(' ',92);if(k<20)k=92;lines.push(l.slice(0,k));l=ind+'  '+l.slice(k).trim()}lines.push(l)});
+  const per=52,pages=[];for(let i=0;i<lines.length;i+=per)pages.push(lines.slice(i,i+per));
+  const objs=[];const add=s=>objs.push(s)-1;
+  add('<</Type/Catalog/Pages 2 0 R>>');add('PLACEHOLDER');add('<</Type/Font/Subtype/Type1/BaseFont/Courier>>');
+  const kids=[];
+  pages.forEach(pg=>{
+    const body='BT /F1 9 Tf 12 TL 40 800 Td\n'+pg.map(l=>'('+l.replace(/[\\()]/g,'\\$&')+') Tj T*').join('\n')+'\nET';
+    const c=add(`<</Length ${body.length}>>\nstream\n${body}\nendstream`);
+    const pgo=add(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Contents ${c+1} 0 R/Resources<</Font<</F1 3 0 R>>>>>>`);
+    kids.push(pgo+1);
+  });
+  objs[1]=`<</Type/Pages/Count ${kids.length}/Kids[${kids.map(k=>k+' 0 R').join(' ')}]>>`;
+  let out='%PDF-1.4\n';const off=[];
+  objs.forEach((o,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${o}\nendobj\n`});
+  const x=out.length;out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+off.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size ${objs.length+1}/Root 1 0 R>>\nstartxref\n${x}\n%%EOF`;
+  save(new Blob([out],{type:'application/pdf'}),'documind-report.pdf');
+}
+
+/* ============================ events ============================ */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');if(!t)return;
+  const a=t.dataset.act,d=t.dataset;
+  if(a==='closemodal'){if(e.target.closest('.modal')&&!e.target.closest('button'))return;S.modal=null;render();return}
+  if(a==='pick'){$('#file').click();return}
+  const acts={
+   go:()=>go(d.r),menu:()=>{S.menu=!S.menu;render()},
+   scroll:()=>{S.menu=false;const f=()=>{const el=document.getElementById(d.t);el&&el.scrollIntoView({behavior:'smooth'})};if(S.route!=='home'){S.route='home';history.replaceState(null,'','#home');render();setTimeout(f,30)}else{render();setTimeout(f,10)}},
+   demo:()=>loadDemo(true),sample:()=>loadDemo(false),
+   analyze:()=>runAnalysis(false),
+   rm:()=>{S.files=S.files.filter(f=>f.id!==+d.id);render()},
+   clearfiles:()=>{S.files=[];S.errors=[];render()},
+   filt:()=>{S.filt[d.g]=d.v;render()},clearfilt:()=>{S.filt={doc:'all',type:'all',sev:'all'};render()},
+   seg:()=>focusChange(d.cid),locate:()=>locate(d.cid),
+   askabout:()=>{const c=curPair().changes.find(x=>x.id===d.cid);go('ask');ask(`What changed in: ${c.title.split(':')[0]}?`)},
+   sugg:()=>{if(S.route!=='ask')go('ask');ask(d.q)},
+   openev:()=>{const ev=S.chat[+d.m].ev[+d.e];S.modal={docId:ev.docId,segId:ev.segId};render();const el=$(`[data-seg="m-${ev.segId}"]`);el&&el.scrollIntoView({block:'center'})},
+   viewchg:()=>{S.focus=d.cid;S.modal=null;go('compare')},
+   csv:csvDownload,pdf:pdfDownload,
+   copyrep:()=>{const tx=reportText();const ok=()=>toast('Report copied to clipboard.');const fb=()=>{S.showRep=true;render();toast('Copy was blocked. The report is shown below so you can select it.',true)};
+     try{navigator.clipboard.writeText(tx).then(ok,fb)}catch(er){fb()}},
+   togglerep:()=>{S.showRep=!S.showRep;render()},
+   askreset:()=>{S.confirmReset=true;render()},noreset:()=>{S.confirmReset=false;render()},reset:resetAll,
+   openhist:()=>{const h=S.history.find(x=>x.id==d.id);if(!h)return;S.files=h.docs.map(x=>({id:++fid,...x,status:'ready',demo:h.demo}));S.an=buildAnalysis(h.docs,h.demo);S.chat=[];toast('Comparison reopened.');go('compare')},
+   delhist:()=>{S.history=S.history.filter(x=>x.id!=d.id);saveHist();render()},
+  };
+  acts[a]&&acts[a]();
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='file'){addFiles([...e.target.files]);e.target.value=''}
+  if(e.target.id==='pairsel'){S.an.sel=+e.target.value;render()}
+});
+document.addEventListener('input',e=>{if(e.target.id==='q')S.draft=e.target.value});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&S.modal){S.modal=null;render()}
+  if(e.target.id==='q'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();ask(e.target.value)}
+  if(e.target.id==='drop'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();$('#file').click()}
+});
+document.addEventListener('submit',e=>{if(e.target.id==='chatform'){e.preventDefault();ask($('#q').value)}});
+['dragover','dragenter'].forEach(ev=>document.addEventListener(ev,e=>{const d=e.target.closest&&e.target.closest('#drop');e.preventDefault();d&&d.classList.add('over')}));
+document.addEventListener('dragleave',e=>{const d=e.target.closest&&e.target.closest('#drop');d&&d.classList.remove('over')});
+document.addEventListener('drop',e=>{e.preventDefault();const d=$('#drop');d&&d.classList.remove('over');if(e.dataTransfer?.files?.length){if(S.route!=='upload')go('upload');addFiles([...e.dataTransfer.files])}});
+
+const h0=location.hash.slice(1);if(['upload','home'].includes(h0))S.route=h0;
+render();
+</script>
+</body>
+</html>
